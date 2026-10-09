@@ -10,11 +10,10 @@ interface AuthValue {
   status: AuthStatus
   login: (username: string, password: string) => Promise<void>
   setup: (input: {
-    fullName: string
     username: string
+    email: string
     password: string
-    email?: string
-    phone?: string
+    code: string
   }) => Promise<void>
   logout: () => void
   /** Replace the cached user (e.g. after the profile was edited). */
@@ -78,11 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setup = useCallback(
     async (input: {
-      fullName: string
       username: string
+      email: string
       password: string
-      email?: string
-      phone?: string
+      code: string
     }) => {
       const me = await api.setupFirstUser(input)
       setUser(me)

@@ -213,11 +213,10 @@ class ApiClient {
 
   /** Creates the first administrator (only works while no users exist) and signs in. */
   async setupFirstUser(input: {
-    fullName: string
     username: string
+    email: string
     password: string
-    email?: string
-    phone?: string
+    code: string
   }): Promise<AuthUser> {
     const res = await this.request<{ token: string; user: AuthUser }>("/auth/setup", {
       method: "POST",
@@ -461,8 +460,10 @@ class ApiClient {
     roleId?: number
     branchId?: number | null
     isActive?: boolean
+    accountCode: string
   }) {
     const res = await this.send<UserDetail>("POST", "/users", {
+      account_code: data.accountCode,
       person_id: data.personId,
       username: data.username,
       password: data.password,

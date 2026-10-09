@@ -26,7 +26,7 @@ export class AuthController {
 
   async setup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await authService.setupFirstUser(req.body ?? {})
+      const result = await authService.setupFirstUser(req.body ?? {}, req)
       res.status(201).json({
         success: true,
         message: "تم إنشاء حساب المدير بنجاح",

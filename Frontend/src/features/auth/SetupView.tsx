@@ -5,12 +5,11 @@ import { errorMessage } from "@/services/api"
 
 export function SetupView() {
   const { setup } = useAuth()
-  const [fullName, setFullName] = useState("")
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
+  const [code, setCode] = useState("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
@@ -21,16 +20,15 @@ export function SetupView() {
 
     if (password.length < 8) return setError("كلمة المرور يجب أن لا تقل عن 8 أحرف.")
     if (password !== confirm) return setError("كلمتا المرور غير متطابقتين.")
-    if (!email.trim() && !phone.trim()) return setError("أدخل البريد الإلكتروني أو رقم الهاتف.")
+    if (!code.trim()) return setError("أدخل رمز الإنشاء.")
 
     setSubmitting(true)
     try {
       await setup({
-        fullName: fullName.trim(),
         username: username.trim(),
+        email: email.trim(),
         password,
-        email: email.trim() || undefined,
-        phone: phone.trim() || undefined,
+        code: code.trim(),
       })
     } catch (err) {
       setError(errorMessage(err))
@@ -49,18 +47,9 @@ export function SetupView() {
       <main className="login-form">
         <div>
           <div className="page-title">إعداد النظام</div>
-          <p>لا توجد حسابات بعد. أنشئ حساب المدير المركزي للمتابعة.</p>
+          <p>لا توجد حسابات بعد. أنشئ حساب المدير للمتابعة.</p>
         </div>
         <form onSubmit={handleSubmit}>
-          <label>
-            الاسم الكامل
-            <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              autoComplete="name"
-              required
-            />
-          </label>
           <label>
             اسم المستخدم
             <input
@@ -82,16 +71,7 @@ export function SetupView() {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               dir="ltr"
-            />
-          </label>
-          <label>
-            رقم الهاتف
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              autoComplete="tel"
-              dir="ltr"
+              required
             />
           </label>
           <label>
@@ -115,6 +95,17 @@ export function SetupView() {
               required
             />
           </label>
+          <label>
+            رمز الإنشاء
+            <input
+              type="password"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              autoComplete="off"
+              dir="ltr"
+              required
+            />
+          </label>
           {error && (
             <div className="info-alert" role="alert">
               <Icon name="warning" />
@@ -130,6 +121,7 @@ export function SetupView() {
         </form>
         <small className="secure-note">
           <Icon name="shield" size={16} /> تظهر هذه الصفحة مرة واحدة فقط، قبل إنشاء أول حساب.
+          يُطلب نفس الرمز لاحقًا عند إضافة أي حساب جديد.
         </small>
       </main>
     </div>

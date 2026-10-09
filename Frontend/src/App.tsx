@@ -95,6 +95,14 @@ interface FormState {
 
 export default function App() {
   const { user, status, logout } = useAuth()
+
+  // /setup is only reachable while no user exists; otherwise send people home.
+  useEffect(() => {
+    if (status === "loading") return
+    const onSetupPath = window.location.pathname.replace(/\/+$/, "") === "/setup"
+    if (status === "setup" && !onSetupPath) window.history.replaceState(null, "", "/setup")
+    else if (status !== "setup" && onSetupPath) window.history.replaceState(null, "", "/")
+  }, [status])
   const data = useData()
   const { students } = data
 

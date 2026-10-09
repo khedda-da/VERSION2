@@ -1,9 +1,11 @@
+import type { Request } from "express"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { db } from "../../db/database.js"
 import { config } from "../../config/env.js"
 import { AppError } from "../../middleware/error.middleware.js"
 import { loadUserById } from "../../middleware/auth.middleware.js"
+import { assertAccountCode } from "../../utils/access-code.js"
 import type { AuthUser } from "../../types/express.js"
 
 export class AuthService {
@@ -56,39 +58,42 @@ export class AuthService {
   /**
    * Creates the very first administrator. Only allowed while the users table is empty.
    */
-  async setupFirstUser(input: {
-    fullName?: string
-    username?: string
-    password?: string
-    email?: string
-    phone?: string
-  }): Promise<{ token: string; user: AuthUser }> {
+  async setupFirstUser(
+    input: {
+      username?: string
+      email?: string
+      password?: string
+      code?: string
+    },
+    req: Request,
+  ): Promise<{ token: string; user: AuthUser }> {
     if (!(await this.needsSetup())) {
       throw new AppError("تم إعداد النظام مسبقًا.", 403)
     }
 
-    const fullName = (input.fullName ?? "").trim()
+    // The secret code proves the person is allowed to claim the admin account.
+    assertAccountCode(req, input.code)
+
     const username = (input.username ?? "").trim()
     const password = input.password ?? ""
-    const email = (input.email ?? "").trim() || null
-    const phone = (input.phone ?? "").trim() || null
+    const email = (input.email ?? "").trim()
 
-    if (!fullName) throw new AppError("يرجى إدخال الاسم الكامل", 400)
     if (!/^[A-Za-z0-9._-]{3,50}$/.test(username)) {
       throw new AppError(
         "اسم المستخدم يجب أن يتكون من 3 إلى 50 حرفًا (أحرف لاتينية وأرقام و . _ - فقط)",
         400,
       )
     }
+    if (!email) throw new AppError("يرجى إدخال البريد الإلكتروني", 400)
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new AppError("البريد الإلكتروني غير صالح", 400)
+    }
     if (password.length < 8) {
       throw new AppError("كلمة المرور يجب أن لا تقل عن 8 أحرف", 400)
     }
-    if (!email && !phone) {
-      throw new AppError("يرجى إدخال البريد الإلكتروني أو رقم الهاتف", 400)
-    }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      throw new AppError("البريد الإلكتروني غير صالح", 400)
-    }
+    // The setup form has no name field: the username is used as the display name.
+    const fullName = username
+    const phone: string | null = null
 
     // The admin role must exist (seedDatabase creates it, this is a safety net).
     const adminRoleName = "مسؤول الإدارة"

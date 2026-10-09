@@ -87,3 +87,21 @@ export function requireBranchOrCentral(
   }
   next()
 }
+
+export const ADMIN_ROLE_NAME = "مسؤول الإدارة"
+
+/** Only users holding the administrator role ("مسؤول الإدارة"). */
+export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user) {
+    res.status(401).json({ success: false, message: "غير مصرح" })
+    return
+  }
+  if (!req.user.roles.some((r) => r.name === ADMIN_ROLE_NAME)) {
+    res.status(403).json({
+      success: false,
+      message: "إضافة الحسابات متاحة لمدير النظام فقط.",
+    })
+    return
+  }
+  next()
+}
