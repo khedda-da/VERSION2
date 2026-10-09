@@ -12,5 +12,6 @@ export const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   corsOrigin: process.env.CORS_ORIGIN || "*",
   databaseUrl: process.env.DATABASE_URL || "",
+  seedDemoData: process.env.SEED_DEMO_DATA === "true",
   isProduction: process.env.NODE_ENV === "production",
 }

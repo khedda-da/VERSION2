@@ -3,12 +3,19 @@ import type { ReactNode } from "react"
 import { api, UNAUTHORIZED_EVENT } from "./api"
 import type { AuthUser } from "@/types"
 
-type AuthStatus = "loading" | "anon" | "authed"
+type AuthStatus = "loading" | "setup" | "anon" | "authed"
 
 interface AuthValue {
   user: AuthUser | null
   status: AuthStatus
   login: (username: string, password: string) => Promise<void>
+  setup: (input: {
+    fullName: string
+    username: string
+    password: string
+    email?: string
+    phone?: string
+  }) => Promise<void>
   logout: () => void
   /** Replace the cached user (e.g. after the profile was edited). */
   setUser: (user: AuthUser | null) => void
@@ -18,12 +25,23 @@ const AuthContext = createContext<AuthValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
-  const [status, setStatus] = useState<AuthStatus>(api.hasToken() ? "loading" : "anon")
+  const [status, setStatus] = useState<AuthStatus>("loading")
 
   // Restore the session from the stored token on first load.
   useEffect(() => {
-    if (!api.hasToken()) return
     let cancelled = false
+    const resolveAnon = () =>
+      api
+        .getSetupStatus()
+        .then((needsSetup) => !cancelled && setStatus(needsSetup ? "setup" : "anon"))
+        .catch(() => !cancelled && setStatus("anon"))
+
+    if (!api.hasToken()) {
+      void resolveAnon()
+      return () => {
+        cancelled = true
+      }
+    }
     api
       .getMe()
       .then((me) => {
@@ -35,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return
         api.logout()
         setUser(null)
-        setStatus("anon")
+        void resolveAnon()
       })
     return () => {
       cancelled = true
@@ -58,6 +76,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("authed")
   }, [])
 
+  const setup = useCallback(
+    async (input: {
+      fullName: string
+      username: string
+      password: string
+      email?: string
+      phone?: string
+    }) => {
+      const me = await api.setupFirstUser(input)
+      setUser(me)
+      setStatus("authed")
+    },
+    [],
+  )
+
   const logout = useCallback(() => {
     api.logout()
     setUser(null)
@@ -65,8 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, status, login, logout, setUser }),
-    [user, status, login, logout],
+    () => ({ user, status, login, setup, logout, setUser }),
+    [user, status, login, setup, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

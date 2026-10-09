@@ -1,38 +1,51 @@
 import bcrypt from "bcryptjs"
 import { db } from "./database.js"
+import { config } from "../config/env.js"
 import { initializeSchema } from "./schema.js"
 
-export async function seedDatabase(): Promise<void> {
-  console.log("[Seed] Checking existing data...")
+export interface SeedOptions {
+  /** Also insert demo branches, halaqat, people and user accounts. */
+  demo?: boolean
+}
 
+const ROLE_DEFINITIONS = [
+  { name: "مسؤول المال", scope: "central" },
+  { name: "مسؤول التنظيم", scope: "central" },
+  { name: "رئيس الشعبة", scope: "central" },
+  { name: "مسؤول الإعلام والاتصال", scope: "central" },
+  { name: "مسؤول الشباب", scope: "central" },
+  { name: "مسؤول الأحداث الثقافية", scope: "central" },
+  { name: "مسؤول الإدارة", scope: "central" },
+  { name: "مسؤول مقر", scope: "branch" },
+]
+
+/** Roles are required for the app to work, so they are always seeded. */
+async function seedRoles(): Promise<void> {
   const existingRoles = await db.query("SELECT COUNT(*) as count FROM roles")
-  const roleCount = Number((existingRoles[0] as any)?.count ?? 0)
+  if (Number((existingRoles[0] as any)?.count ?? 0) > 0) return
+  for (const r of ROLE_DEFINITIONS) {
+    await db.run("INSERT INTO roles (name, scope, is_active) VALUES (?, ?, 1)", [r.name, r.scope])
+  }
+}
 
-  if (roleCount > 0) {
-    console.log("[Seed] Database already contains data. Skipping seed.")
+export async function seedDatabase(options: SeedOptions = {}): Promise<void> {
+  const demo = options.demo ?? config.seedDemoData
+
+  console.log("[Seed] Checking existing data...")
+  await seedRoles()
+
+  if (!demo) {
+    console.log("[Seed] Demo data disabled. The first user is created from the setup page.")
     return
   }
 
-  console.log("[Seed] Seeding initial data for Quranic Association...")
-
-  // 1. Roles
-  const roles = [
-    { name: "مسؤول المال", scope: "central" },
-    { name: "مسؤول التنظيم", scope: "central" },
-    { name: "رئيس الشعبة", scope: "central" },
-    { name: "مسؤول الإعلام والاتصال", scope: "central" },
-    { name: "مسؤول الشباب", scope: "central" },
-    { name: "مسؤول الأحداث الثقافية", scope: "central" },
-    { name: "مسؤول الإدارة", scope: "central" },
-    { name: "مسؤول مقر", scope: "branch" },
-  ]
-
-  for (const r of roles) {
-    await db.run("INSERT INTO roles (name, scope, is_active) VALUES (?, ?, 1)", [
-      r.name,
-      r.scope,
-    ])
+  const existingUsers = await db.query("SELECT COUNT(*) as count FROM users")
+  if (Number((existingUsers[0] as any)?.count ?? 0) > 0) {
+    console.log("[Seed] Database already contains data. Skipping demo seed.")
+    return
   }
+
+  console.log("[Seed] Seeding demo data for Quranic Association...")
 
   // 2. Branches (4 active branches)
   const branches = [
@@ -416,7 +429,7 @@ export async function seedDatabase(): Promise<void> {
 
 if (process.argv[1]?.includes("seed.ts")) {
   initializeSchema()
-    .then(() => seedDatabase())
+    .then(() => seedDatabase({ demo: true }))
     .then(() => {
       console.log("Seed script completed.")
       process.exit(0)

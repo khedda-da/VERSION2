@@ -9,7 +9,7 @@ import { MobileNav } from "@/components/layout/MobileNav"
 import { Icon } from "@/components/ui/Icon"
 
 // Features
-import { LoginView } from "@/features/auth"
+import { LoginView, SetupView } from "@/features/auth"
 import { DashboardView } from "@/features/dashboard"
 import { StudentsView } from "@/features/students/StudentsView"
 import { StudentProfile } from "@/features/students/StudentProfile"
@@ -230,6 +230,8 @@ export default function App() {
         </main>
       </div>
     )
+
+  if (status === "setup") return <SetupView />
 
   if (status === "anon" || !user) return <LoginView />
 

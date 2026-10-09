@@ -48,7 +48,7 @@ async function runTests() {
 
   // 1. Setup DB and Server
   await initializeSchema()
-  await seedDatabase()
+  await seedDatabase({ demo: true })
 
   const app = createApp()
   await new Promise<void>((resolve) => {

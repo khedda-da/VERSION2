@@ -204,6 +204,30 @@ class ApiClient {
     return res.data.user
   }
 
+  async getSetupStatus(): Promise<boolean> {
+    const res = await this.request<{ needsSetup: boolean }>("/auth/setup-status", {
+      skipAuthRedirect: true,
+    })
+    return Boolean(res.data.needsSetup)
+  }
+
+  /** Creates the first administrator (only works while no users exist) and signs in. */
+  async setupFirstUser(input: {
+    fullName: string
+    username: string
+    password: string
+    email?: string
+    phone?: string
+  }): Promise<AuthUser> {
+    const res = await this.request<{ token: string; user: AuthUser }>("/auth/setup", {
+      method: "POST",
+      body: JSON.stringify(input),
+      skipAuthRedirect: true,
+    })
+    this.setToken(res.data.token)
+    return res.data.user
+  }
+
   /** Check a password without touching the stored session. */
   async verifyPassword(username: string, password: string): Promise<boolean> {
     try {

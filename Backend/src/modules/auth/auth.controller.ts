@@ -16,6 +16,27 @@ export class AuthController {
     }
   }
 
+  async setupStatus(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      res.json({ success: true, data: { needsSetup: await authService.needsSetup() } })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async setup(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await authService.setupFirstUser(req.body ?? {})
+      res.status(201).json({
+        success: true,
+        message: "تم إنشاء حساب المدير بنجاح",
+        data: result,
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+
   async me(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) {
