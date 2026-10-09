@@ -96,13 +96,13 @@ interface FormState {
 export default function App() {
   const { user, status, logout } = useAuth()
 
-  // /setup is only reachable while no user exists; otherwise send people home.
+  // The setup page is rendered at "/" while no user exists (no separate URL,
+  // so a refresh never hits a missing static route). Clean up any old /setup URL.
   useEffect(() => {
-    if (status === "loading") return
-    const onSetupPath = window.location.pathname.replace(/\/+$/, "") === "/setup"
-    if (status === "setup" && !onSetupPath) window.history.replaceState(null, "", "/setup")
-    else if (status !== "setup" && onSetupPath) window.history.replaceState(null, "", "/")
-  }, [status])
+    if (window.location.pathname.replace(/\/+$/, "") === "/setup") {
+      window.history.replaceState(null, "", "/")
+    }
+  }, [])
   const data = useData()
   const { students } = data
 
