@@ -9,9 +9,19 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/db/seed.ts",
-    "test": "tsx tests/api.test.ts"
+    "test": "tsx tests/api.test.ts",
+    "db:reset": "node scripts/reset-db.mjs",
+    "test:auth": "tsx tests/auth.test.ts"
   },
-  "keywords": ["quran", "association", "djam3iya", "management"],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "quran",
+    "association",
+    "djam3iya",
+    "management"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

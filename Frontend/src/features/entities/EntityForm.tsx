@@ -978,7 +978,6 @@ function UserForm({ mode, initial, onClose, onSuccess }: EntityFormProps) {
     initialRole?.branch_name ? (branches.find((b) => b.name === initialRole.branch_name)?.id ?? "") : "",
   )
   const [active, setActive] = useState(detail ? detail.isActive : true)
-  const [accountCode, setAccountCode] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const selectedRole = roles.find((r) => r.roleId === roleId)
@@ -993,7 +992,6 @@ function UserForm({ mode, initial, onClose, onSuccess }: EntityFormProps) {
     if (!editing && password.length < 6) next.password = "كلمة المرور 6 أحرف على الأقل."
     if (editing && password && password.length < 6) next.password = "كلمة المرور 6 أحرف على الأقل."
     if (needsBranch && !branchId) next.branch = "هذا الدور خاص بمقر، اختر المقر."
-    if (!editing && !accountCode.trim()) next.accountCode = "رمز الإنشاء مطلوب."
     setErrors(next)
     if (Object.keys(next).length) return
 
@@ -1018,7 +1016,6 @@ function UserForm({ mode, initial, onClose, onSuccess }: EntityFormProps) {
         roleId: roleId ? Number(roleId) : undefined,
         branchId: needsBranch && branchId ? Number(branchId) : null,
         isActive: active,
-        accountCode: accountCode.trim(),
       })
       return {
         message: "تمت إضافة حساب المستخدم بنجاح.",
@@ -1128,19 +1125,6 @@ function UserForm({ mode, initial, onClose, onSuccess }: EntityFormProps) {
             <option>غير نشط</option>
           </select>
         </Field>
-        {!editing && (
-          <Field label="رمز الإنشاء" required full error={errors.accountCode}>
-            <input
-              dir="ltr"
-              type="password"
-              value={accountCode}
-              onChange={(e) => setAccountCode(e.target.value)}
-              className={errors.accountCode ? "invalid" : ""}
-              autoComplete="off"
-              placeholder="••••••••"
-            />
-          </Field>
-        )}
       </div>
     </FormShell>
   )

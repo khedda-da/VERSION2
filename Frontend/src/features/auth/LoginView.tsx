@@ -4,7 +4,7 @@ import { useAuth } from "@/services/AuthContext"
 import { errorMessage } from "@/services/api"
 
 export function LoginView() {
-  const { login } = useAuth()
+  const { login, goToSetup, goToRegister, needsSetup, registrationOpen, notice } = useAuth()
   const [recovery, setRecovery] = useState(false)
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -66,6 +66,14 @@ export function LoginView() {
               required
             />
           </label>
+          {notice && !error && (
+            <div className="info-alert" role="status">
+              <Icon name="mail" />
+              <span>
+                <small>{notice}</small>
+              </span>
+            </div>
+          )}
           {error && (
             <div className="info-alert" role="alert">
               <Icon name="warning" />
@@ -76,7 +84,21 @@ export function LoginView() {
             </div>
           )}
           <div className="login-options">
-            <span />
+            {registrationOpen !== false && (
+              <button type="button" className="text-link" onClick={goToRegister}>
+                إنشاء حساب جديد
+              </button>
+            )}
+            {needsSetup !== false && (
+              <button
+                type="button"
+                className="text-link"
+                onClick={goToSetup}
+                title="إذا كانت هذه أول مرة تقوم بتشغيل النظام وتريد إنشاء حساب المدير الأول"
+              >
+                إعداد النظام (أول استخدام)
+              </button>
+            )}
             <button type="button" onClick={() => setRecovery(!recovery)}>
               نسيت كلمة المرور؟
             </button>

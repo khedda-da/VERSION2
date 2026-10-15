@@ -12,8 +12,11 @@ export const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   corsOrigin: process.env.CORS_ORIGIN || "*",
   databaseUrl: process.env.DATABASE_URL || "",
-  /** Secret code required to create the first admin and to add new accounts. */
-  accountCode: process.env.ACCOUNT_CODE || "asa elhadjadj",
+  /** Optional custom location for the built-in SQLite file. */
+  sqlitePath: process.env.SQLITE_PATH || "",
+  /** Public self-registration (accounts stay inactive until an admin approves them). */
+  allowRegistration: process.env.ALLOW_REGISTRATION !== "false",
+  registerRateLimitMax: parseInt(process.env.REGISTER_RATE_LIMIT_MAX || "10", 10),
   seedDemoData: process.env.SEED_DEMO_DATA === "true",
   isProduction: process.env.NODE_ENV === "production",
 }

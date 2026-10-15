@@ -18,6 +18,7 @@ export class NotificationsService {
       else if (n.related_entity_type === "halaqa") targetScreen = "halaqat"
       else if (n.related_entity_type === "branch") targetScreen = "branches"
       else if (n.related_entity_type === "role") targetScreen = "roles"
+      else if (n.related_entity_type === "user") targetScreen = "users"
 
       return {
         id: `notif-${n.id}`,

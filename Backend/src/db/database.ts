@@ -135,9 +135,11 @@ export function getDatabase(): IDatabase {
       dbInstance = new PostgresDatabase(config.databaseUrl)
     } else {
       const isVercel = Boolean(process.env.VERCEL)
-      const dbPath = isVercel
-        ? path.resolve("/tmp/quran_association.db")
-        : path.resolve(__dirname, "../../data/quran_association.db")
+      const dbPath = config.sqlitePath
+        ? path.resolve(config.sqlitePath)
+        : isVercel
+          ? path.resolve("/tmp/quran_association.db")
+          : path.resolve(__dirname, "../../data/quran_association.db")
       console.log(`[Database] Using SQLite at: ${dbPath}`)
       dbInstance = new SqliteDatabase(dbPath)
     }

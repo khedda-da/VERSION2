@@ -9,7 +9,7 @@ import { MobileNav } from "@/components/layout/MobileNav"
 import { Icon } from "@/components/ui/Icon"
 
 // Features
-import { LoginView, SetupView } from "@/features/auth"
+import { LoginView, SetupView, RegisterView } from "@/features/auth"
 import { DashboardView } from "@/features/dashboard"
 import { StudentsView } from "@/features/students/StudentsView"
 import { StudentProfile } from "@/features/students/StudentProfile"
@@ -96,13 +96,13 @@ interface FormState {
 export default function App() {
   const { user, status, logout } = useAuth()
 
-  // The setup page is rendered at "/" while no user exists (no separate URL,
-  // so a refresh never hits a missing static route). Clean up any old /setup URL.
+  // Keep the address bar in step with the signed-out screen (/setup, /register, or / for login).
   useEffect(() => {
-    if (window.location.pathname.replace(/\/+$/, "") === "/setup") {
-      window.history.replaceState(null, "", "/")
-    }
-  }, [])
+    if (status === "loading") return
+    const wanted = status === "setup" ? "/setup" : status === "register" ? "/register" : "/"
+    const current = window.location.pathname.replace(/\/+$/, "") || "/"
+    if (current !== wanted) window.history.replaceState(null, "", wanted)
+  }, [status])
   const data = useData()
   const { students } = data
 
@@ -240,6 +240,8 @@ export default function App() {
     )
 
   if (status === "setup") return <SetupView />
+
+  if (status === "register") return <RegisterView />
 
   if (status === "anon" || !user) return <LoginView />
 

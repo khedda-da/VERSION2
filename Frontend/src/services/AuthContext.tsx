@@ -3,37 +3,70 @@ import type { ReactNode } from "react"
 import { api, UNAUTHORIZED_EVENT } from "./api"
 import type { AuthUser } from "@/types"
 
-type AuthStatus = "loading" | "setup" | "anon" | "authed"
+/** "anon" = the login screen; "setup" and "register" are the other signed-out screens. */
+type AuthStatus = "loading" | "setup" | "register" | "anon" | "authed"
+
+interface SignupInput {
+  fullName: string
+  username: string
+  password: string
+  email?: string
+  phone?: string
+}
 
 interface AuthValue {
   user: AuthUser | null
   status: AuthStatus
+  /** null = the server could not be reached, so we don't know yet. */
+  needsSetup: boolean | null
+  registrationOpen: boolean | null
+  /** One-off message for the login screen (e.g. "system already set up"). */
+  notice: string
   login: (username: string, password: string) => Promise<void>
-  setup: (input: {
-    username: string
-    email: string
-    password: string
-    code: string
-  }) => Promise<void>
+  setup: (input: SignupInput) => Promise<void>
+  register: (input: SignupInput) => Promise<void>
   logout: () => void
+  goToSetup: () => void
+  goToRegister: () => void
+  goToLogin: () => void
   /** Replace the cached user (e.g. after the profile was edited). */
   setUser: (user: AuthUser | null) => void
 }
 
 const AuthContext = createContext<AuthValue | null>(null)
 
+const currentPath = () => window.location.pathname.replace(/\/+$/, "") || "/"
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [status, setStatus] = useState<AuthStatus>("loading")
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null)
+  const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null)
+  const [notice, setNotice] = useState("")
 
   // Restore the session from the stored token on first load.
   useEffect(() => {
     let cancelled = false
+    const path = currentPath()
+
+    // Decide which signed-out screen to show, from the server state + the URL.
     const resolveAnon = () =>
       api
-        .getSetupStatus()
-        .then((needsSetup) => !cancelled && setStatus(needsSetup ? "setup" : "anon"))
-        .catch(() => !cancelled && setStatus("anon"))
+        .getAuthStatus()
+        .then((info) => {
+          if (cancelled) return
+          setNeedsSetup(info.needsSetup)
+          setRegistrationOpen(info.registrationOpen)
+          if (info.needsSetup) return setStatus("setup")
+          if (path === "/setup") setNotice("تم إعداد النظام مسبقًا. سجّل الدخول أو أنشئ حسابًا جديدًا.")
+          setStatus(path === "/register" && info.registrationOpen ? "register" : "anon")
+        })
+        .catch((err) => {
+          console.warn("[Auth] Failed to reach /auth/setup-status:", err)
+          if (cancelled) return
+          // Server state unknown: honour the URL so these pages stay reachable.
+          setStatus(path === "/setup" ? "setup" : path === "/register" ? "register" : "anon")
+        })
 
     if (!api.hasToken()) {
       void resolveAnon()
@@ -63,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onUnauthorized = () => {
       setUser(null)
-      setStatus("anon")
+      setStatus((s) => (s === "loading" ? s : "anon"))
     }
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
@@ -75,19 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("authed")
   }, [])
 
-  const setup = useCallback(
-    async (input: {
-      username: string
-      email: string
-      password: string
-      code: string
-    }) => {
-      const me = await api.setupFirstUser(input)
-      setUser(me)
-      setStatus("authed")
-    },
-    [],
-  )
+  const setup = useCallback(async (input: SignupInput) => {
+    const me = await api.setupFirstUser(input)
+    setUser(me)
+    setNeedsSetup(false)
+    setStatus("authed")
+  }, [])
+
+  // Does not sign in: the new account waits for an admin to approve it.
+  const register = useCallback(async (input: SignupInput) => {
+    await api.register(input)
+  }, [])
 
   const logout = useCallback(() => {
     api.logout()
@@ -95,9 +126,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("anon")
   }, [])
 
+  const goToSetup = useCallback(() => {
+    setNotice("")
+    setStatus("setup")
+  }, [])
+  const goToRegister = useCallback(() => {
+    setNotice("")
+    setStatus("register")
+  }, [])
+  const goToLogin = useCallback(() => {
+    setNotice("")
+    setStatus("anon")
+  }, [])
+
   const value = useMemo(
-    () => ({ user, status, login, setup, logout, setUser }),
-    [user, status, login, setup, logout],
+    () => ({
+      user,
+      status,
+      needsSetup,
+      registrationOpen,
+      notice,
+      login,
+      setup,
+      register,
+      logout,
+      goToSetup,
+      goToRegister,
+      goToLogin,
+      setUser,
+    }),
+    [user, status, needsSetup, registrationOpen, notice, login, setup, register, logout, goToSetup, goToRegister, goToLogin],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

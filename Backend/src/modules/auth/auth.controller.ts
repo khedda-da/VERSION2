@@ -18,7 +18,7 @@ export class AuthController {
 
   async setupStatus(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      res.json({ success: true, data: { needsSetup: await authService.needsSetup() } })
+      res.json({ success: true, data: await authService.getStatus() })
     } catch (error) {
       next(error)
     }
@@ -26,10 +26,23 @@ export class AuthController {
 
   async setup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await authService.setupFirstUser(req.body ?? {}, req)
+      const result = await authService.setupFirstUser(req.body ?? {})
       res.status(201).json({
         success: true,
         message: "تم إنشاء حساب المدير بنجاح",
+        data: result,
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await authService.register(req.body ?? {})
+      res.status(201).json({
+        success: true,
+        message: "تم استلام طلبك. سيتم تفعيل حسابك بعد موافقة إدارة الجمعية.",
         data: result,
       })
     } catch (error) {

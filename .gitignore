@@ -18,3 +18,9 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local SQLite database (contains real accounts; a committed DB blocks the /setup page)
+Backend/data/*.db
+Backend/data/*.db-wal
+Backend/data/*.db-shm
+Backend/data/backups/

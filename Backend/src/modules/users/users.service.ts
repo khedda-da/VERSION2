@@ -1,9 +1,7 @@
-import type { Request } from "express"
 import bcrypt from "bcryptjs"
 import { db } from "../../db/database.js"
 import { AppError } from "../../middleware/error.middleware.js"
 import { logAudit } from "../../middleware/audit.middleware.js"
-import { assertAccountCode } from "../../utils/access-code.js"
 import type { AuthUser } from "../../types/express.js"
 
 export interface CreateUserDto {
@@ -13,7 +11,6 @@ export interface CreateUserDto {
   role_id?: number
   branch_id?: number | null
   is_active?: boolean
-  account_code?: string
 }
 
 export interface UpdateUserDto {
@@ -115,8 +112,7 @@ export class UsersService {
     }
   }
 
-  async create(dto: CreateUserDto, user: AuthUser | undefined, req: Request) {
-    assertAccountCode(req, dto.account_code)
+  async create(dto: CreateUserDto, user?: AuthUser) {
     if (!dto.username || !dto.username.trim()) {
       throw new AppError("اسم المستخدم مطلوب", 400)
     }

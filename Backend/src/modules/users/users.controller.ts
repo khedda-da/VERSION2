@@ -23,7 +23,7 @@ export class UsersController {
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const data = await usersService.create(req.body, req.user, req)
+      const data = await usersService.create(req.body, req.user)
       res.status(201).json({
         success: true,
         message: "تم إنشاء حساب المستخدم بنجاح",

@@ -204,19 +204,39 @@ class ApiClient {
     return res.data.user
   }
 
-  async getSetupStatus(): Promise<boolean> {
-    const res = await this.request<{ needsSetup: boolean }>("/auth/setup-status", {
+  async getAuthStatus(): Promise<{ needsSetup: boolean; registrationOpen: boolean }> {
+    const res = await this.request<{ needsSetup: boolean; registrationOpen?: boolean }>(
+      "/auth/setup-status",
+      { skipAuthRedirect: true },
+    )
+    return {
+      needsSetup: Boolean(res.data.needsSetup),
+      registrationOpen: Boolean(res.data.registrationOpen),
+    }
+  }
+
+  /** Public sign-up. The account stays inactive until an admin approves it (no token is returned). */
+  async register(input: {
+    fullName: string
+    username: string
+    password: string
+    email?: string
+    phone?: string
+  }): Promise<void> {
+    await this.request("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(input),
       skipAuthRedirect: true,
     })
-    return Boolean(res.data.needsSetup)
   }
 
   /** Creates the first administrator (only works while no users exist) and signs in. */
   async setupFirstUser(input: {
+    fullName: string
     username: string
-    email: string
     password: string
-    code: string
+    email?: string
+    phone?: string
   }): Promise<AuthUser> {
     const res = await this.request<{ token: string; user: AuthUser }>("/auth/setup", {
       method: "POST",
@@ -460,10 +480,8 @@ class ApiClient {
     roleId?: number
     branchId?: number | null
     isActive?: boolean
-    accountCode: string
   }) {
     const res = await this.send<UserDetail>("POST", "/users", {
-      account_code: data.accountCode,
       person_id: data.personId,
       username: data.username,
       password: data.password,

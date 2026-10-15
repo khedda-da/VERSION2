@@ -35,6 +35,10 @@ export function ensureDbReady(): Promise<void> {
 export function createApp() {
   const app = express()
 
+  // Behind Vercel / a reverse proxy: trust one hop so req.ip is the real client
+  // (needed by the registration rate limiter).
+  app.set("trust proxy", 1)
+
   // Middlewares
   app.use(
     cors({
@@ -74,19 +78,23 @@ export function createApp() {
   app.get("/health", healthHandler)
   app.get("/api/health", healthHandler)
 
-  // API Routes
-  app.use("/api/auth", authRoutes)
-  app.use("/api/persons", personsRoutes)
-  app.use("/api/branches", branchesRoutes)
-  app.use("/api/halaqat", halaqatRoutes)
-  app.use("/api/sheikhs", sheikhsRoutes)
-  app.use("/api/students", studentsRoutes)
-  app.use("/api/roles", rolesRoutes)
-  app.use("/api/users", usersRoutes)
-  app.use("/api/notifications", notificationsRoutes)
-  app.use("/api/dashboard", dashboardRoutes)
-  app.use("/api/reports", reportsRoutes)
-  app.use("/api/audit", auditRoutes)
+  // API Routes (mounted on both /api and / to support Vercel services rewrites whether prefix is kept or stripped)
+  const apiRouter = express.Router()
+  apiRouter.use("/auth", authRoutes)
+  apiRouter.use("/persons", personsRoutes)
+  apiRouter.use("/branches", branchesRoutes)
+  apiRouter.use("/halaqat", halaqatRoutes)
+  apiRouter.use("/sheikhs", sheikhsRoutes)
+  apiRouter.use("/students", studentsRoutes)
+  apiRouter.use("/roles", rolesRoutes)
+  apiRouter.use("/users", usersRoutes)
+  apiRouter.use("/notifications", notificationsRoutes)
+  apiRouter.use("/dashboard", dashboardRoutes)
+  apiRouter.use("/reports", reportsRoutes)
+  apiRouter.use("/audit", auditRoutes)
+
+  app.use("/api", apiRouter)
+  app.use("/", apiRouter)
 
   // 404 handler
   app.use((req, res) => {
