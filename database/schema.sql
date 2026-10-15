@@ -248,4 +248,26 @@ JOIN branches b ON b.id = s.branch_id
 LEFT JOIN halaqat_persons hp_student ON hp_student.person_id = p.id AND hp_student.role_in_halaqa = 'student'
 LEFT JOIN halaqat h ON h.id = hp_student.halaqa_id;
 
+-- =========================================================
+-- الحساب الإداري الافتراضي (Default Administrator)
+-- اسم المستخدم: admin
+-- كلمة المرور: Admin@123456
+-- =========================================================
+
+INSERT INTO persons (full_name, phone, email, gender, person_type)
+VALUES ('مدير النظام', '0550000000', 'admin@djam3ya.dz', 'male', 'both')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO users (person_id, username, password_hash, is_active)
+SELECT p.id, 'admin', '$2b$10$aPM6/UHwEYM46C9K0gKeYe9OUVzq14AXKiknffnPeuhc9ZLtzNKZa', TRUE
+FROM persons p
+WHERE p.email = 'admin@djam3ya.dz'
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO person_roles (person_id, role_id)
+SELECT p.id, r.id
+FROM persons p, roles r
+WHERE p.email = 'admin@djam3ya.dz' AND r.name = 'مسؤول الإدارة'
+ON CONFLICT DO NOTHING;
+
 COMMIT;

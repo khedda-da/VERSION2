@@ -28,14 +28,65 @@ async function seedRoles(): Promise<void> {
   }
 }
 
+/** Ensure the default Central Admin account exists so the app is always accessible after deployment. */
+async function seedDefaultAdmin(): Promise<void> {
+  const existingAdmin = await db.get("SELECT id FROM users WHERE username = 'admin' LIMIT 1")
+  if (existingAdmin) return
+
+  console.log("[Seed] Ensuring default Central Admin account (admin)...")
+
+  // Find or create person
+  let person = await db.get(
+    "SELECT id FROM persons WHERE email = 'admin@djam3ya.dz' OR full_name = 'مدير النظام' LIMIT 1",
+  )
+  let personId = person?.id
+
+  if (!personId) {
+    const res = await db.run(
+      `INSERT INTO persons (full_name, phone, email, gender, person_type)
+       VALUES (?, ?, ?, ?, ?)`,
+      ["مدير النظام", "0550000000", "admin@djam3ya.dz", "male", "both"],
+    )
+    personId = res.lastInsertRowid
+  }
+
+  // Pre-hashed password for "Admin@123456"
+  const passwordHash = await bcrypt.hash("Admin@123456", 10)
+
+  // Insert user
+  await db.run(
+    `INSERT INTO users (person_id, username, password_hash, is_active)
+     VALUES (?, ?, ?, 1)`,
+    [personId, "admin", passwordHash],
+  )
+
+  // Assign Central Admin role (مسؤول الإدارة)
+  const roleRow = await db.get(`SELECT id FROM roles WHERE name = 'مسؤول الإدارة' LIMIT 1`)
+  if (roleRow) {
+    const existingRoleLink = await db.get(
+      `SELECT id FROM person_roles WHERE person_id = ? AND role_id = ?`,
+      [personId, roleRow.id],
+    )
+    if (!existingRoleLink) {
+      await db.run(`INSERT INTO person_roles (person_id, role_id) VALUES (?, ?)`, [
+        personId,
+        roleRow.id,
+      ])
+    }
+  }
+
+  console.log("[Seed] Default Central Admin account created (username: admin).")
+}
+
 export async function seedDatabase(options: SeedOptions = {}): Promise<void> {
   const demo = options.demo ?? config.seedDemoData
 
   console.log("[Seed] Checking existing data...")
   await seedRoles()
+  await seedDefaultAdmin()
 
   if (!demo) {
-    console.log("[Seed] Demo data disabled. The first user is created from the setup page.")
+    console.log("[Seed] Demo data disabled. Default admin account ensured.")
     return
   }
 

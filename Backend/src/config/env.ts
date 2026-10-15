@@ -19,4 +19,5 @@ export const config = {
   registerRateLimitMax: parseInt(process.env.REGISTER_RATE_LIMIT_MAX || "10", 10),
   seedDemoData: process.env.SEED_DEMO_DATA === "true",
   isProduction: process.env.NODE_ENV === "production",
+  accountCode: process.env.ACCOUNT_CODE || "",
 }
