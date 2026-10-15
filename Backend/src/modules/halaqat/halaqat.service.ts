@@ -189,7 +189,7 @@ export class HalaqatService {
         dto.name.trim(),
         dto.level?.trim() || "ثانوي",
         dto.branch_id,
-        dto.is_active !== undefined ? (dto.is_active ? 1 : 0) : 1,
+        dto.is_active !== undefined ? Boolean(dto.is_active) : true,
       ],
     )
 
@@ -220,7 +220,7 @@ export class HalaqatService {
     const name = dto.name !== undefined ? dto.name.trim() : existing.name
     const level = dto.level !== undefined ? dto.level.trim() : existing.level
     const branch_id = dto.branch_id !== undefined ? dto.branch_id : existing.branch_id
-    const is_active = dto.is_active !== undefined ? (dto.is_active ? 1 : 0) : existing.is_active
+    const is_active = dto.is_active !== undefined ? Boolean(dto.is_active) : Boolean(existing.is_active)
 
     await db.run(
       `UPDATE halaqat SET name = ?, level = ?, branch_id = ?, is_active = ? WHERE id = ?`,

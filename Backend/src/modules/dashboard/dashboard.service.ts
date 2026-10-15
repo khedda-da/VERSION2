@@ -42,7 +42,7 @@ export class DashboardService {
 
     // 3. Total Halaqat
     const halaqaRow = await db.get(
-      `SELECT COUNT(*) as total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active
+      `SELECT COUNT(*) as total, SUM(CASE WHEN is_active THEN 1 ELSE 0 END) as active
        FROM halaqat ${branchCondition}`,
       params,
     )
@@ -51,7 +51,7 @@ export class DashboardService {
 
     // 4. Total Branches
     const branchRow = await db.get(
-      `SELECT COUNT(*) as total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active
+      `SELECT COUNT(*) as total, SUM(CASE WHEN is_active THEN 1 ELSE 0 END) as active
        FROM branches ${scope.type === "branch" && scope.branchId ? "WHERE id = ?" : ""}`,
       scope.type === "branch" && scope.branchId ? [scope.branchId] : [],
     )

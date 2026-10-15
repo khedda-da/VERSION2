@@ -11,7 +11,12 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || "djam3ya_default_super_secret_key_2026",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   corsOrigin: process.env.CORS_ORIGIN || "*",
-  databaseUrl: process.env.DATABASE_URL || "",
+  databaseUrl:
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.SUPABASE_DATABASE_URL ||
+    "",
   /** Optional custom location for the built-in SQLite file. */
   sqlitePath: process.env.SQLITE_PATH || "",
   /** Public self-registration (accounts stay inactive until an admin approves them). */

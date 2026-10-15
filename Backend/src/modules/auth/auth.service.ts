@@ -141,7 +141,7 @@ export class AuthService {
     let userId: number
     try {
       const created = await db.run(
-        `INSERT INTO users (person_id, username, password_hash, is_active) VALUES (?, ?, ?, 0)`,
+        `INSERT INTO users (person_id, username, password_hash, is_active) VALUES (?, ?, ?, FALSE)`,
         [person.lastInsertRowid, username, passwordHash],
       )
       userId = created.lastInsertRowid
@@ -158,12 +158,12 @@ export class AuthService {
         `SELECT DISTINCT u.id FROM users u
          JOIN person_roles pr ON pr.person_id = u.person_id
          JOIN roles r ON r.id = pr.role_id
-         WHERE u.is_active = 1 AND r.scope = 'central'`,
+         WHERE u.is_active = TRUE AND r.scope = 'central'`,
       )
       for (const admin of admins) {
         await db.run(
           `INSERT INTO notifications (user_id, title, body, type, is_read, related_entity_type, related_entity_id)
-           VALUES (?, ?, ?, 'info', 0, 'user', ?)`,
+           VALUES (?, ?, ?, 'info', FALSE, 'user', ?)`,
           [
             admin.id,
             "طلب تسجيل جديد",
@@ -220,7 +220,7 @@ export class AuthService {
     const adminRoleName = "مسؤول الإدارة"
     let role = await db.get(`SELECT id FROM roles WHERE name = ?`, [adminRoleName])
     if (!role) {
-      await db.run(`INSERT INTO roles (name, scope, is_active) VALUES (?, 'central', 1)`, [
+      await db.run(`INSERT INTO roles (name, scope, is_active) VALUES (?, 'central', TRUE)`, [
         adminRoleName,
       ])
       role = await db.get(`SELECT id FROM roles WHERE name = ?`, [adminRoleName])

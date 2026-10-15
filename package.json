@@ -1,0 +1,18 @@
+{
+  "name": "djam3ya-root",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "Backend",
+    "Frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --prefix Backend",
+    "dev:frontend": "npm run dev --prefix Frontend",
+    "build:backend": "npm run build --prefix Backend",
+    "build:frontend": "npm run build --prefix Frontend",
+    "build": "npm run build:backend && npm run build:frontend",
+    "start": "node Backend/dist/server.js",
+    "test": "npm test --prefix Backend"
+  }
+}

@@ -21,6 +21,21 @@ export default defineConfig({
       '/api': {
         target: process.env.BACKEND_URL || 'http://localhost:5000',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', (_err, _req, res) => {
+            const httpRes = res as import('node:http').ServerResponse
+            if (!httpRes.headersSent) {
+              httpRes.writeHead(503, { 'Content-Type': 'application/json' })
+              httpRes.end(
+                JSON.stringify({
+                  success: false,
+                  message:
+                    'تعذر الاتصال بخادم الـ Backend على المنفذ 5000. تأكد من تشغيل الخادم عبر (npm run dev:backend).',
+                }),
+              )
+            }
+          })
+        },
       },
     },
   },

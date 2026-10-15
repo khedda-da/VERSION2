@@ -17,10 +17,12 @@ export function errorHandler(
 ): void {
   console.error("[Error Handler]", err)
 
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({
+  const status =
+    err?.statusCode || err?.status || (err instanceof AppError ? err.statusCode : null)
+  if (status && typeof status === "number" && status >= 400 && status < 500) {
+    res.status(status).json({
       success: false,
-      message: err.message,
+      message: err.message || "طلب غير صالح",
     })
     return
   }
@@ -44,6 +46,7 @@ export function errorHandler(
 
   res.status(500).json({
     success: false,
-    message: "حدث خطأ داخلي في الخادم. يرجى المحاولة لاحقاً.",
+    message: err?.message || "حدث خطأ داخلي في الخادم. يرجى المحاولة لاحقاً.",
+    ...(process.env.NODE_ENV !== "production" ? { details: String(err) } : {}),
   })
 }

@@ -279,7 +279,7 @@ export class StudentsService {
 
     if (!branchId) {
       // Default to first active branch
-      const firstBranch = await db.get(`SELECT id FROM branches WHERE is_active = 1 LIMIT 1`)
+      const firstBranch = await db.get(`SELECT id FROM branches WHERE is_active = TRUE LIMIT 1`)
       branchId = firstBranch ? Number(firstBranch.id) : 1
     }
 

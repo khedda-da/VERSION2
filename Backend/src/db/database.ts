@@ -78,17 +78,29 @@ class PostgresDatabase implements IDatabase {
   public isPostgres = true
 
   constructor(connectionString: string) {
-    this.pool = new pg.Pool({ connectionString })
+    const isLocalhost =
+      connectionString.includes("localhost") || connectionString.includes("127.0.0.1")
+    this.pool = new pg.Pool({
+      connectionString,
+      ssl: isLocalhost ? false : { rejectUnauthorized: false },
+    })
   }
 
-  private convertPlaceholders(sql: string): string {
-    // Converts ? to $1, $2, etc. if needed
+  private adaptSql(sql: string): string {
+    let adapted = sql
+      .replace(/\bis_active\s*=\s*1\b/gi, "is_active = TRUE")
+      .replace(/\bis_active\s*=\s*0\b/gi, "is_active = FALSE")
+      .replace(/\bis_read\s*=\s*1\b/gi, "is_read = TRUE")
+      .replace(/\bis_read\s*=\s*0\b/gi, "is_read = FALSE")
+      .replace(/WHEN\s+is_active\s*=\s*1/gi, "WHEN is_active")
+      .replace(/WHEN\s+is_active\s*=\s*0/gi, "WHEN NOT is_active")
+
     let index = 1
-    return sql.replace(/\?/g, () => `$${index++}`)
+    return adapted.replace(/\?/g, () => `$${index++}`)
   }
 
   async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
-    const converted = this.convertPlaceholders(sql)
+    const converted = this.adaptSql(sql)
     const res = await this.pool.query(converted, params)
     return res.rows as T[]
   }
@@ -99,7 +111,7 @@ class PostgresDatabase implements IDatabase {
   }
 
   async run(sql: string, params: any[] = []): Promise<DbResult> {
-    let converted = this.convertPlaceholders(sql)
+    let converted = this.adaptSql(sql)
     // If it's an INSERT and doesn't have RETURNING id, add it for Postgres
     const isInsert = /^\s*INSERT\s+INTO/i.test(converted)
     if (isInsert && !/RETURNING/i.test(converted)) {

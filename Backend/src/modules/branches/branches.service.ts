@@ -141,7 +141,7 @@ export class BranchesService {
         dto.name.trim(),
         dto.location?.trim() || null,
         dto.phone?.trim() || null,
-        dto.is_active !== undefined ? (dto.is_active ? 1 : 0) : 1,
+        dto.is_active !== undefined ? Boolean(dto.is_active) : true,
       ],
     )
 
@@ -177,7 +177,7 @@ export class BranchesService {
     const name = dto.name !== undefined ? dto.name.trim() : existing.name
     const location = dto.location !== undefined ? dto.location.trim() : existing.location
     const phone = dto.phone !== undefined ? dto.phone.trim() : existing.phone
-    const is_active = dto.is_active !== undefined ? (dto.is_active ? 1 : 0) : existing.is_active
+    const is_active = dto.is_active !== undefined ? Boolean(dto.is_active) : Boolean(existing.is_active)
 
     await db.run(
       `UPDATE branches SET name = ?, location = ?, phone = ?, is_active = ? WHERE id = ?`,

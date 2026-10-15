@@ -148,7 +148,7 @@ export class UsersService {
         dto.person_id,
         dto.username.trim(),
         hash,
-        dto.is_active !== undefined ? (dto.is_active ? 1 : 0) : 1,
+        dto.is_active !== undefined ? Boolean(dto.is_active) : true,
       ],
     )
 
@@ -177,7 +177,7 @@ export class UsersService {
     }
 
     const username = dto.username !== undefined ? dto.username.trim() : existing.username
-    const is_active = dto.is_active !== undefined ? (dto.is_active ? 1 : 0) : existing.is_active
+    const is_active = dto.is_active !== undefined ? Boolean(dto.is_active) : Boolean(existing.is_active)
 
     if (dto.password && dto.password.trim()) {
       const hash = await bcrypt.hash(dto.password.trim(), 10)

@@ -27,7 +27,10 @@ export function ensureDbReady(): Promise<void> {
     dbReadyPromise = (async () => {
       await initializeSchema()
       await seedDatabase()
-    })()
+    })().catch((err) => {
+      dbReadyPromise = null
+      throw err
+    })
   }
   return dbReadyPromise
 }
